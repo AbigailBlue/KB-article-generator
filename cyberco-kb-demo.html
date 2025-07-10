@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberCo AI Knowledge Base Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .select-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .transform-btn {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .transform-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            min-height: 600px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .raw-case .panel-header {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .kb-article .panel-header {
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            height: 500px;
+            overflow-y: auto;
+        }
+
+        .case-details {
+            space-y: 1rem;
+        }
+
+        .case-field {
+            margin-bottom: 1rem;
+        }
+
+        .case-field label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .case-field .value {
+            color: #6b7280;
+            padding: 0.5rem 0;
+        }
+
+        .description {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #dc2626;
+            font-style: italic;
+        }
+
+        .kb-content h4 {
+            color: #1e40af;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .kb-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kb-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .kb-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kb-content ol li {
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #9ca3af;
+            font-style: italic;
+            padding: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .panels {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ CyberCo AI Knowledge Base Generator</h1>
+        <p>Transform support cases into professional KB articles</p>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="select-wrapper">
+                <select id="scenarioSelect">
+                    <option value="">Select a scenario...</option>
+                    <option value="case001">Agent Installation Error 1603</option>
+                    <option value="case002">High CPU Usage</option>
+                    <option value="case003">Agents Offline</option>
+                    <option value="case004">False Positive Detection</option>
+                    <option value="case005">Agent Update Failures</option>
+                </select>
+            </div>
+            <button class="transform-btn" id="transformBtn">
+                🔄 Transform to KB Article
+            </button>
+        </div>
+
+        <div class="panels">
+            <div class="panel raw-case">
+                <div class="panel-header">
+                    <span>📧</span>
+                    <h3>Raw Support Case</h3>
+                </div>
+                <div class="panel-content" id="rawCaseContent">
+                    <div class="placeholder">
+                        Select a scenario above to view the raw support case
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel kb-article">
+                <div class="panel-header">
+                    <span>📄</span>
+                    <h3>Generated KB Article</h3>
+                </div>
+                <div class="panel-content" id="kbArticleContent">
+                    <div class="placeholder">
+                        Click "Transform to KB Article" to generate the professional knowledge base article
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = {
+            "case001": {
+                "id": "case001",
+                "title": "Agent Installation Error 1603",
+                "rawCase": {
+                    "caseId": "CYB-2024-001234",
+                    "priority": "High",
+                    "subject": "Can't install agent - keeps failing with error 1603",
+                    "description": "Customer called saying the CyberCo agent won't install on their new Windows Server 2019 machine. They keep getting error 1603. They tried running as admin but same error. The server is joined to CORPORATE.LOCAL domain. They need this fixed ASAP because it's a critical server for their accounting department. Previous attempts failed around 2:30 PM and 4:15 PM today. Error occurs during MSI installation phase. Customer is frustrated because they have 15 more servers to deploy.",
+                    "environment": {
+                        "operatingSystem": "Windows Server 2019 Standard",
+                        "architecture": "x64",
+                        "domain": "CORPORATE.LOCAL",
+                        "productVersion": "CyberCo Endpoint Security 10.7.0"
+                    },
+                    "technicalDetails": {
+                        "errorCode": "1603",
+                        "logExtract": "MSI installation terminated prematurely due to an error during installation. Return value 3.",
+                        "affectedSystems": 1,
+                        "reproductionSteps": "Run CyberCoAgent.msi as administrator"
+                    }
+                },
+                "generatedKB": {
+                    "title": "Resolve CyberCo Agent Installation Error 1603 on Windows Server",
+                    "prerequisites": [
+                        "Administrator privileges on target system",
+                        "Network connectivity to CyberCo update servers",
+                        "Minimum 2GB available disk space"
+                    ],
+                    "resolutionSteps": [
+                        "Open Command Prompt as Administrator",
+                        "Navigate to the agent installation directory",
+                        "Run: msiexec /i CyberCoAgent.msi /l*v install.log",
+                        "Review install.log for specific error details",
+                        "Clear Windows Installer cache: rd /s %windir%\\Installer\\$PatchCache$",
+                        "Restart Windows Installer service: net stop msiserver && net start msiserver",
+                        "Retry installation with verbose logging enabled"
+                    ],
+                    "verification": [
+                        "Confirm CyberCo Agent service is running in Services.msc",
+                        "Verify agent appears in CyberCo ePO console within 5 minutes",
+                        "Check agent version matches deployment package"
+                    ],
+                    "relatedArticles": [
+                        "CyberCo Agent Deployment Best Practices",
+                        "Windows Installer Troubleshooting Guide",
+                        "ePO Agent Communication Requirements"
+                    ]
+                }
+            },
+            "case002": {
+                "id": "case002",
+                "title": "High CPU Usage",
+                "rawCase": {
+                    "caseId": "CYB-2024-001567",
+                    "priority": "Critical",
+                    "subject": "CyberCo agent eating up all CPU on SQL server!!!",
+                    "description": "Our main SQL Server is running at 95% CPU constantly since yesterday. Task manager shows McAfeeFramework.exe using 60-70% CPU. This is killing our database performance and users are complaining about slow queries. We have critical reports that need to run tonight. The server has 32GB RAM and 8 cores but it's barely responsive. We tried restarting the CyberCo services but CPU usage comes right back up. This server handles our entire ERP system and we can't have it running this slow. Need urgent help!",
+                    "environment": {
+                        "operatingSystem": "Windows Server 2016 Standard",
+                        "architecture": "x64",
+                        "domain": "PROD.COMPANY.COM",
+                        "productVersion": "CyberCo Endpoint Security 10.7.2"
+                    },
+                    "technicalDetails": {
+                        "errorCode": "N/A",
+                        "logExtract": "Real-time scanning consuming excessive CPU cycles on SQL database files",
+                        "affectedSystems": 1,
+                        "reproductionSteps": "Monitor Task Manager during database operations"
+                    }
+                },
+                "generatedKB": {
+                    "title": "Resolve High CPU Usage by CyberCo Agent on SQL Server",
+                    "prerequisites": [
+                        "Administrator access to SQL Server",
+                        "Access to CyberCo ePO console",
+                        "Knowledge of SQL Server file locations"
+                    ],
+                    "resolutionSteps": [
+                        "Open CyberCo ePO console and navigate to Policy Catalog",
+                        "Edit the Access Protection policy for the SQL Server",
+                        "Add exclusions for SQL Server data files (*.mdf, *.ldf, *.ndf)",
+                        "Exclude SQL Server installation directory from real-time scanning",
+                        "Add process exclusions for sqlservr.exe and sqlagent.exe",
+                        "Configure exclusions for SQL Server backup directories",
+                        "Deploy updated policy to affected server",
+                        "Monitor CPU usage for 30 minutes to confirm reduction"
+                    ],
+                    "verification": [
+                        "Verify CPU usage drops below 20% within 30 minutes",
+                        "Confirm SQL Server performance metrics return to normal",
+                        "Test database query response times",
+                        "Check CyberCo agent is still providing protection"
+                    ],
+                    "relatedArticles": [
+                        "CyberCo Exclusions Best Practices for SQL Server",
+                        "Performance Tuning for Database Servers",
+                        "Real-time Scanning Configuration Guide"
+                    ]
+                }
+            },
+            "case003": {
+                "id": "case003",
+                "title": "Agents Offline",
+                "rawCase": {
+                    "caseId": "CYB-2024-001890",
+                    "priority": "High",
+                    "subject": "Multiple agents went offline after VPN client update",
+                    "description": "Hi, we updated our VPN client software last week and now about 25 CyberCo agents are showing as offline in the console. These are all remote workers using the new Cisco AnyConnect client. The agents were working fine before the update. When users try to connect to VPN, they can browse the internet but the CyberCo agents don't come back online. We've tried rebooting their machines but still offline. Some users are traveling and we need to get this fixed remotely. The agents show last communication was 5 days ago right around when we did the VPN update.",
+                    "environment": {
+                        "operatingSystem": "Windows 10 Enterprise",
+                        "architecture": "x64",
+                        "domain": "CORP.EXAMPLE.COM",
+                        "productVersion": "CyberCo Endpoint Security 10.7.1"
+                    },
+                    "technicalDetails": {
+                        "errorCode": "N/A",
+                        "logExtract": "Agent-to-server communication timeout. Unable to reach ePO server on port 8443.",
+                        "affectedSystems": 25,
+                        "reproductionSteps": "Connect via VPN, check agent status in system tray"
+                    }
+                },
+                "generatedKB": {
+                    "title": "Resolve Agent Offline Issues After VPN Client Update",
+                    "prerequisites": [
+                        "Administrative access to VPN client configuration",
+                        "Network connectivity testing tools",
+                        "CyberCo ePO server access"
+                    ],
+                    "resolutionSteps": [
+                        "Verify ePO server is accessible on port 8443 through VPN tunnel",
+                        "Check if VPN client is blocking agent-to-server communication",
+                        "Configure VPN client to allow traffic to ePO server IP/FQDN",
+                        "Add ePO server ports (8443, 80, 443) to VPN client allowed list",
+                        "Test connectivity: telnet [ePO-server] 8443 from client machine",
+                        "Force agent check-in: run 'maconfig -enforce -nogui' as administrator",
+                        "If needed, manually specify ePO server in agent sitelist.xml",
+                        "Verify agents appear online in ePO console within 15 minutes"
+                    ],
+                    "verification": [
+                        "Confirm all 25 agents show online status in ePO console",
+                        "Verify last communication timestamp is current",
+                        "Test policy deployment to affected agents",
+                        "Confirm real-time protection is active on client machines"
+                    ],
+                    "relatedArticles": [
+                        "CyberCo Agent Network Requirements",
+                        "VPN Configuration for Enterprise Security",
+                        "Troubleshooting Agent Communication Issues"
+                    ]
+                }
+            },
+            "case004": {
+                "id": "case004",
+                "title": "False Positive Detection",
+                "rawCase": {
+                    "caseId": "CYB-2024-002134",
+                    "priority": "Medium",
+                    "subject": "Our custom app keeps getting quarantined by CyberCo",
+                    "description": "Hello, we have a custom application called DataProcessor.exe that our development team built for internal use. Every time we deploy it to workstations, CyberCo quarantines it as suspicious. The file gets flagged with some generic trojan detection but this is definitely a false positive. Our developers signed the executable and it's been scanned by multiple antivirus tools with no issues. We need to whitelist this application across all our workstations. The app is critical for our daily operations and we can't keep restoring it from quarantine every time. Can you help us add this to the allowed list?",
+                    "environment": {
+                        "operatingSystem": "Windows 10 Pro",
+                        "architecture": "x64",
+                        "domain": "INTERNAL.CORP.NET",
+                        "productVersion": "CyberCo Endpoint Security 10.7.3"
+                    },
+                    "technicalDetails": {
+                        "errorCode": "N/A",
+                        "logExtract": "Threat detected: Generic.Trojan.DataProcessor - File quarantined: C:\\Apps\\DataProcessor.exe",
+                        "affectedSystems": 50,
+                        "reproductionSteps": "Copy DataProcessor.exe to C:\\Apps\\ and execute"
+                    }
+                },
+                "generatedKB": {
+                    "title": "Configure Application Whitelist for Custom Software",
+                    "prerequisites": [
+                        "Administrator access to CyberCo ePO console",
+                        "File hash or digital signature of the application",
+                        "Authority to create security exceptions"
+                    ],
+                    "resolutionSteps": [
+                        "Open CyberCo ePO console and navigate to Policy Catalog",
+                        "Select Threat Prevention policy for affected systems",
+                        "Go to Anti-Malware settings and click on Exclusions",
+                        "Add file exclusion for DataProcessor.exe by full path",
+                        "Alternatively, add exclusion by file hash (SHA-256 recommended)",
+                        "Configure exclusion scope to apply to all detection methods",
+                        "Set exclusion to apply to both real-time and on-demand scans",
+                        "Deploy updated policy to affected computer groups",
+                        "Restore quarantined files from CyberCo quarantine console"
+                    ],
+                    "verification": [
+                        "Confirm DataProcessor.exe runs without quarantine alerts",
+                        "Verify application functions normally on all workstations",
+                        "Check that other security features remain active",
+                        "Test with fresh copy of application to ensure exclusion works"
+                    ],
+                    "relatedArticles": [
+                        "Best Practices for Application Whitelisting",
+                        "Managing False Positives in Enterprise Environment",
+                        "Digital Signature Verification for Custom Applications"
+                    ]
+                }
+            },
+            "case005": {
+                "id": "case005",
+                "title": "Agent Update Failures",
+                "rawCase": {
+                    "caseId": "CYB-2024-002456",
+                    "priority": "High",
+                    "subject": "Agent updates failing with disk space errors",
+                    "description": "We're trying to update our CyberCo agents from version 10.6.8 to 10.7.3 but about 30% of our workstations are failing with disk space errors. The update process seems to be leaving temporary files behind and filling up the C: drive. Some workstations only have 256GB SSDs so space is tight. The error happens during the update process and then the agent gets stuck in a weird state where it's not fully updated but also not on the old version. We've tried manually cleaning temp files but the update still fails. Need help with the proper cleanup procedure and making sure the updates complete successfully.",
+                    "environment": {
+                        "operatingSystem": "Windows 10 Enterprise",
+                        "architecture": "x64",
+                        "domain": "OFFICE.COMPANY.LOCAL",
+                        "productVersion": "CyberCo Endpoint Security 10.6.8"
+                    },
+                    "technicalDetails": {
+                        "errorCode": "1603",
+                        "logExtract": "Insufficient disk space for installation. Required: 2.5GB, Available: 1.2GB",
+                        "affectedSystems": 45,
+                        "reproductionSteps": "Deploy agent update via ePO to workstation with limited disk space"
+                    }
+                },
+                "generatedKB": {
+                    "title": "Resolve Agent Update Failures Due to Disk Space Issues",
+                    "prerequisites": [
+                        "Administrative access to affected workstations",
+                        "CyberCo ePO console access",
+                        "Minimum 3GB free disk space per workstation"
+                    ],
+                    "resolutionSteps": [
+                        "Free up disk space by running Disk Cleanup utility",
+                        "Clear Windows temp directory: del /f /s /q %temp%\\*",
+                        "Remove old CyberCo installer files: rd /s /q \"C:\\Program Files\\McAfee\\Agent\\updates\"",
+                        "Clear Windows Installer cache for failed updates",
+                        "Stop CyberCo services: net stop masvc && net stop mfemms",
+                        "Manually run agent update with clean install flag",
+                        "Restart services after successful installation",
+                        "Configure automatic temp file cleanup via group policy"
+                    ],
+                    "verification": [
+                        "Verify agent version updated to 10.7.3 in ePO console",
+                        "Check that all CyberCo services are running normally",
+                        "Confirm real-time protection is active",
+                        "Test that automatic updates work for future deployments"
+                    ],
+                    "relatedArticles": [
+                        "CyberCo Agent Update Best Practices",
+                        "Disk Space Management for Enterprise Workstations",
+                        "Troubleshooting Windows Installer Issues"
+                    ]
+                }
+            }
+        };
+
+        // DOM elements
+        const scenarioSelect = document.getElementById('scenarioSelect');
+        const transformBtn = document.getElementById('transformBtn');
+        const rawCaseContent = document.getElementById('rawCaseContent');
+        const kbArticleContent = document.getElementById('kbArticleContent');
+
+        // Event listeners
+        scenarioSelect.addEventListener('change', displayRawCase);
+        transformBtn.addEventListener('click', transformToKB);
+
+        function displayRawCase() {
+            const selectedScenario = scenarioSelect.value;
+            if (!selectedScenario || !scenarios[selectedScenario]) {
+                rawCaseContent.innerHTML = '<div class="placeholder">Select a scenario above to view the raw support case</div>';
+                kbArticleContent.innerHTML = '<div class="placeholder">Click "Transform to KB Article" to generate the professional knowledge base article</div>';
+                return;
+            }
+
+            const scenario = scenarios[selectedScenario];
+            const rawCase = scenario.rawCase;
+
+            rawCaseContent.innerHTML = `
+                <div class="case-details">
+                    <div class="case-field">
+                        <label>Case ID:</label>
+                        <div class="value">${rawCase.caseId}</div>
+                    </div>
+                    <div class="case-field">
+                        <label>Priority:</label>
+                        <div class="value">${rawCase.priority}</div>
+                    </div>
+                    <div class="case-field">
+                        <label>Subject:</label>
+                        <div class="value">${rawCase.subject}</div>
+                    </div>
+                    <div class="case-field">
+                        <label>Description:</label>
+                        <div class="description">${rawCase.description}</div>
+                    </div>
+                    <div class="case-field">
+                        <label>Environment:</label>
+                        <div class="value">
+                            <strong>OS:</strong> ${rawCase.environment.operatingSystem}<br>
+                            <strong>Architecture:</strong> ${rawCase.environment.architecture}<br>
+                            <strong>Domain:</strong> ${rawCase.environment.domain}<br>
+                            <strong>Product:</strong> ${rawCase.environment.productVersion}
+                        </div>
+                    </div>
+                    <div class="case-field">
+                        <label>Technical Details:</label>
+                        <div class="value">
+                            <strong>Error Code:</strong> ${rawCase.technicalDetails.errorCode}<br>
+                            <strong>Log Extract:</strong> ${rawCase.technicalDetails.logExtract}<br>
+                            <strong>Affected Systems:</strong> ${rawCase.technicalDetails.affectedSystems}<br>
+                            <strong>Reproduction:</strong> ${rawCase.technicalDetails.reproductionSteps}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Reset KB article
+            kbArticleContent.innerHTML = '<div class="placeholder">Click "Transform to KB Article" to generate the professional knowledge base article</div>';
+        }
+
+        function transformToKB() {
+            const selectedScenario = scenarioSelect.value;
+            if (!selectedScenario || !scenarios[selectedScenario]) {
+                alert('Please select a scenario first');
+                return;
+            }
+
+            const scenario = scenarios[selectedScenario];
+            const kb = scenario.generatedKB;
+
+            // Add loading animation
+            kbArticleContent.innerHTML = '<div class="placeholder">🔄 Transforming case to KB article...</div>';
+
+            // Simulate AI processing delay
+            setTimeout(() => {
+                kbArticleContent.innerHTML = `
+                    <div class="kb-content">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            ${kb.prerequisites.map(prereq => `<li>${prereq}</li>`).join('')}
+                        </ul>
+                        
+                        <h4>Resolution Steps</h4>
+                        <ol>
+                            ${kb.resolutionSteps.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                        
+                        <h4>Verification</h4>
+                        <ul>
+                            ${kb.verification.map(verify => `<li>${verify}</li>`).join('')}
+                        </ul>
+                        
+                        <h4>Related Articles</h4>
+                        <ul>
+                            ${kb.relatedArticles.map(article => `<li>${article}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
